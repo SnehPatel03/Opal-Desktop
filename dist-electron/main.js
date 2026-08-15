@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app } from "electron";
+import { ipcMain, BrowserWindow, app, desktopCapturer } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
@@ -12,10 +12,10 @@ let studio;
 let floatingWebCam;
 function createWindow() {
   win = new BrowserWindow({
-    width: 600,
-    height: 600,
-    minHeight: 600,
-    minWidth: 300,
+    width: 440,
+    height: 340,
+    minHeight: 340,
+    minWidth: 440,
     show: false,
     frame: false,
     hasShadow: false,
@@ -81,7 +81,10 @@ function createWindow() {
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
   });
   studio.webContents.on("did-finish-load", () => {
-    studio == null ? void 0 : studio.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+    studio == null ? void 0 : studio.webContents.send(
+      "main-process-message",
+      (/* @__PURE__ */ new Date()).toLocaleString()
+    );
   });
   win.once("ready-to-show", () => win == null ? void 0 : win.show());
   studio.once("ready-to-show", () => studio == null ? void 0 : studio.show());
@@ -89,7 +92,9 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
     studio.loadURL(new URL("studio.html", VITE_DEV_SERVER_URL).toString());
-    floatingWebCam.loadURL(new URL("webcam.html", VITE_DEV_SERVER_URL).toString());
+    floatingWebCam.loadURL(
+      new URL("webcam.html", VITE_DEV_SERVER_URL).toString()
+    );
   } else {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
     studio.loadFile(path.join(RENDERER_DIST, "studio.html"));
@@ -107,6 +112,37 @@ app.on("window-all-closed", () => {
     studio = null;
     floatingWebCam = null;
   }
+});
+ipcMain.on("closeApp", () => {
+  if (process.platform != "darwin") {
+    app.quit();
+    win = null, studio = null, floatingWebCam = null;
+  }
+});
+ipcMain.handle("getSources", async () => {
+  const data = await desktopCapturer.getSources({
+    thumbnailSize: { height: 100, width: 150 },
+    fetchWindowIcons: true,
+    types: ["window", "screen"]
+  });
+  return data;
+});
+ipcMain.on("media-sources", async (event, payload) => {
+  console.log(event);
+  studio == null ? void 0 : studio.webContents.send("profile-received", payload);
+});
+ipcMain.on("resize-studio", (event, payload) => {
+  console.log(event);
+  if (payload.shrink) {
+    studio == null ? void 0 : studio.setSize(400, 100);
+  }
+  if (!payload.shrink) {
+    studio == null ? void 0 : studio.setSize(400, 250);
+  }
+});
+ipcMain.on("hide-plugin", (event, payload) => {
+  console.log(event);
+  win == null ? void 0 : win.webContents.send("hide-plugin", payload);
 });
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {

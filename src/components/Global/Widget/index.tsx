@@ -31,6 +31,7 @@ const Widget = () => {
         })
       | null;
   } | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const { user } = useUser();
   const { state, fetchMediaResources } = useMediaSource();
@@ -38,9 +39,27 @@ const Widget = () => {
 
   useEffect(() => {
     if (user && user.id) {
-      fetchUserProfile(user.id).then((p) => setProfile(p));
+      fetchUserProfile(user.id)
+        .then((response) => {
+          // Support both `{ user: ... }` API responses and direct user objects.
+          const profileUser =
+            response?.user ??
+            response?.data?.user ??
+            response?.data ??
+            (response?.id ? response : null);
+
+          setProfile({ status: response?.status ?? 200, user: profileUser });
+        })
+        .catch((error) => {
+          setProfileError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load your profile.",
+          );
+        });
+      fetchMediaResources();
     }
-  }, [user]);
+  }, [user, fetchMediaResources]);
 
   return (
     <>
@@ -52,8 +71,10 @@ const Widget = () => {
         </ClerkLoading>
       </div>
       <Show when="signed-in">
-        {profile ? (
+        {profile?.user ? (
           <MediaConfig state={state} user={profile.user} />
+        ) : profileError ? (
+          <p className="text-sm text-red-400">{profileError}</p>
         ) : (
           <div>
             <Loader />

@@ -8,13 +8,7 @@ import {
 
 const AuthButton = () => {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2">
-        <img src="/logo.svg" alt="Opal" className="h-7 w-7 object-contain" />
-
-        <span className="text-sm font-semibold text-white">Opal</span>
-      </div>
-
+    <div className="flex items-center">
       <Show when="signed-out">
         <div className="flex items-center gap-3">
           <SignInButton>
@@ -54,12 +48,11 @@ const AuthButton = () => {
         </div>
       </Show>
 
-
       <Show when="signed-in">
         <UserButton
           appearance={{
             elements: {
-              avatarBox: "h-9 w-9",
+              avatarBox: "h-8 w-8",
             },
           }}
         />

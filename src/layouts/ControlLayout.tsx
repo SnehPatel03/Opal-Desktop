@@ -5,9 +5,10 @@ import { X } from "lucide-react";
 type Props = {
   children: React.ReactNode;
   className?: string;
+  headerContent?: React.ReactNode;
 };
 
-const ControlLayout = ({ children, className }: Props) => {
+const ControlLayout = ({ children, className, headerContent }: Props) => {
   return (
     <div
       className={cn(
@@ -18,19 +19,8 @@ const ControlLayout = ({ children, className }: Props) => {
         className,
       )}
     >
-      <div className="draggable flex items-center justify-between px-5 py-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-auto px-3 gap-1 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-            <img
-              src="/logo.svg"
-              alt="App Logo"
-              className="w-6 h-6 object-contain"
-            />
-            <span className="text-gray-200 text-xl ">Opal</span>
-          </div>
-
-          <div className="flex flex-col"></div>
-        </div>
+      <div className="draggable flex h-14 shrink-0 items-center justify-between border-b border-white/10 px-4">
+        <div className="non-draggable">{headerContent}</div>
 
         {/* Close Button */}
         <button
@@ -51,8 +41,8 @@ const ControlLayout = ({ children, className }: Props) => {
         </button>
       </div>
 
-      <main className="flex-1 overflow-auto">
-        <div className="p-5">{children}</div>
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full p-4">{children}</div>
       </main>
     </div>
   );

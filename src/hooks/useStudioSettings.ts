@@ -1,6 +1,6 @@
 import { updateStudioSettingSchema } from "@/schemas/StudioSettings.schema";
 import useZodForm from "./useZodForm";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateStudioSettings } from "@/lib/utils";
 import { toast } from "sonner";
@@ -12,15 +12,13 @@ export const useStudioSettings = (
   preset?: "HD" | "SD",
   plan?: "PRO" | "FREE",
 ) => {
-  const [onPreset, setPreset] = useState<"HD" | "SD" | undefined>();
-
   const { register, watch } = useZodForm(updateStudioSettingSchema, {
     screen: screen!,
     audio: audio!,
     preset: preset!,
   });
 
-  const { mutate, isPending } = useMutation({
+  const { mutate } = useMutation({
     mutationKey: ["update-studio"],
     mutationFn: (data: {
       screen: string;
@@ -32,6 +30,9 @@ export const useStudioSettings = (
       return toast(data.status === 200 ? "Success" : "Error", {
         description: data.message,
       });
+    },
+    onError: () => {
+      toast.error("Unable to save media settings");
     },
   });
 
@@ -45,11 +46,13 @@ export const useStudioSettings = (
         plan,
       });
     }
-  }, []);
+  }, [audio, id, plan, preset, screen]);
 
   useEffect(() => {
-    const subscribe = watch((values) => {
-      setPreset(values.preset);
+    const subscribe = watch((values, { type }) => {
+      // Ignore form initialization/reset events. Persist only user selections.
+      if (type !== "change") return;
+
       mutate({
         screen: values.screen,
         id: id,
@@ -66,7 +69,7 @@ export const useStudioSettings = (
       });
     });
     return () => subscribe.unsubscribe();
-  }, [watch]);
+  }, [id, mutate, plan, watch]);
 
-  return { register, isPending, onPreset };
+  return { register };
 };

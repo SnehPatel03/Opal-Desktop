@@ -10,12 +10,15 @@ const isClerkConfigured = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 function App() {
   return (
     <QueryClientProvider client={client}>
-      <ControlLayout>
+      <ControlLayout headerContent={isClerkConfigured ? <AuthButton /> : undefined}>
         {isClerkConfigured ? (
-          <>
-            <AuthButton />
+          <div className="flex h-full flex-col">
             <Widget />
-          </>
+            <div className="mt-auto flex items-center gap-2 pt-3 text-sm font-semibold text-zinc-100">
+              <img src="/logo.svg" alt="Opal" className="h-7 w-7 object-contain" />
+              <span>Opal</span>
+            </div>
+          </div>
         ) : (
           <div className="rounded-xl border border-white/10 bg-white/5 p-5 text-gray-200">
             <h1 className="text-lg font-medium">Opal</h1>

@@ -1,5 +1,5 @@
 import { getMediaResources } from "@/lib/utils";
-import { useReducer } from "react";
+import { useCallback, useReducer } from "react";
 
 export type SourceDeviceprops = {
   displays?: {
@@ -45,9 +45,10 @@ export const useMediaSource = () => {
     },
   );
 
-  const fetchMediaResources = async () => {
+  const fetchMediaResources = useCallback(async () => {
     action({ type: "GET_DEVICES", payload: { isPending: true } });
-    getMediaResources().then((sources) =>
+    try {
+      const sources = await getMediaResources();
       action({
         type: "GET_DEVICES",
         payload: {
@@ -55,8 +56,17 @@ export const useMediaSource = () => {
           audioInputs: sources.audio,
           isPending: false,
         },
-      }),
-    );
-  };
+      });
+    } catch (error) {
+      action({
+        type: "GET_DEVICES",
+        payload: {
+          errors:
+            error instanceof Error ? error.message : "Unable to load media devices",
+          isPending: false,
+        },
+      });
+    }
+  }, []);
   return { state, fetchMediaResources };
 };
