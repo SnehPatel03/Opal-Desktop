@@ -23,12 +23,36 @@ export const fetchUserProfile = async (clerkId: string) => {
   return response.data;
 };
 
+export type DesktopSource = {
+  id: string;
+  name: string;
+  display_id: string;
+};
+
 export const getMediaResources = async () => {
-  const displays = await window.ipcRenderer.invoke("getSources"); // just a syntax no need to Remember
-  const enumeratedDevices =
-    await window.navigator.mediaDevices.enumerateDevices();
-  const audioInputs = enumeratedDevices.filter((d) => d.kind === "audioinput");
-  console.log("getting Sources");
+  if (!window.ipcRenderer) {
+    throw new Error("Media sources are available only in the desktop app.");
+  }
+
+  // Browsers hide microphone names until the user grants microphone access.
+  // Request it once, then immediately release the stream because recording has
+  // not started yet.
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+  } catch (error) {
+    // Devices can still be listed after a denial, but their labels may be blank.
+    console.warn("Microphone permission was not granted.", error);
+  }
+
+  const [displays, enumeratedDevices] = await Promise.all([
+    window.ipcRenderer.invoke("getSources") as Promise<DesktopSource[]>,
+    navigator.mediaDevices.enumerateDevices(),
+  ]);
+  const audioInputs = enumeratedDevices.filter(
+    (device) => device.kind === "audioinput",
+  );
+
   return { displays, audio: audioInputs };
 };
 export const updateStudioSettings = async (
@@ -52,4 +76,22 @@ export const updateStudioSettings = async (
   );
 
   return res.data;
+};
+
+export const hidePluginWindow = (state: boolean) => {
+  window.ipcRenderer.send("hide-plugin", { state });
+};
+
+export const videoRecordingTime = (ms: number) => {
+  const second = Math.floor((ms / 1000) % 60)
+    .toString()
+    .padStart(2, "0");
+  const minute = Math.floor((ms / 1000 / 60) % 60)
+    .toString()
+    .padStart(2, "0");
+  const hour = Math.floor((ms / 1000 / 60 / 60) % 60)
+    .toString()
+    .padStart(2, "0");
+
+  return { length: `${hour}:${minute}:${second}`, minute };
 };

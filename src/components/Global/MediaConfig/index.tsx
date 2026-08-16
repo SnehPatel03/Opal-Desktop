@@ -67,10 +67,15 @@ const MediaConfig = ({ user, state }: Props) => {
             focus:ring-white/5
           "
         >
-          {state.displays?.map((display, key) => (
+          {!state.displays?.length && (
+            <option value="" disabled>
+              No screens or windows found
+            </option>
+          )}
+          {state.displays?.map((display) => (
             <option
               value={display.id}
-              key={key}
+              key={display.id}
               className="bg-[#171717] text-zinc-200"
             >
               {display.name}
@@ -103,13 +108,18 @@ const MediaConfig = ({ user, state }: Props) => {
             focus:ring-white/5
           "
         >
-          {state.audioInputs?.map((device, key) => (
+          {!state.audioInputs?.length && (
+            <option value="" disabled>
+              No microphones found
+            </option>
+          )}
+          {state.audioInputs?.map((device) => (
             <option
               value={device.deviceId}
-              key={key}
+              key={device.deviceId}
               className="bg-[#171717] text-zinc-200"
             >
-              {device.lable}
+              {device.label || "Microphone (permission required)"}
             </option>
           ))}
         </select>

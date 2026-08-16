@@ -12,6 +12,9 @@
     "dist-electron"
   ],
   "mac": {
+    "extendInfo": {
+      "NSMicrophoneUsageDescription": "Opal needs microphone access to record audio with your screen capture."
+    },
     "target": [
       "dmg"
     ],

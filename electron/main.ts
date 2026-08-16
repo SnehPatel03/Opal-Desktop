@@ -20,6 +20,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 let win: BrowserWindow | null;
 let studio: BrowserWindow | null;
 let floatingWebCam: BrowserWindow | null;
+let studioProfile: unknown | null = null;
 
 function createWindow() {
   win = new BrowserWindow({
@@ -45,14 +46,14 @@ function createWindow() {
   });
   studio = new BrowserWindow({
     width: 400,
-    height: 70,
-    minHeight: 70,
+    height: 100,
+    minHeight: 100,
     minWidth: 400,
     show: false,
     frame: false,
     hasShadow: false,
     transparent: true,
-    backgroundColor: "#171717",
+    backgroundColor: "#00000000",
     alwaysOnTop: true,
     focusable: true,
     movable: true,
@@ -99,6 +100,9 @@ function createWindow() {
       "main-process-message",
       new Date().toLocaleString(),
     );
+    if (studioProfile) {
+      studio?.webContents.send("profile-received", studioProfile);
+    }
   });
 
   win.once("ready-to-show", () => win?.show());
@@ -142,7 +146,7 @@ ipcMain.on("closeApp", () => {
 });
 
 ipcMain.handle("getSources", async () => {
-  const data =  await desktopCapturer.getSources({
+  const data = await desktopCapturer.getSources({
     thumbnailSize: { height: 100, width: 150 },
     fetchWindowIcons: true,
     types: ["window", "screen"],
@@ -151,7 +155,8 @@ ipcMain.handle("getSources", async () => {
   return data;
 });
 ipcMain.on("media-sources", async (event, payload) => {
-  console.log(event);
+  console.log("🧐 Resources", payload);
+  studioProfile = payload;
   studio?.webContents.send("profile-received", payload);
 });
 
@@ -161,7 +166,7 @@ ipcMain.on("resize-studio", (event, payload) => {
     studio?.setSize(400, 100);
   }
   if (!payload.shrink) {
-    studio?.setSize(400, 250);
+    studio?.setSize(400, 330);
   }
 });
 

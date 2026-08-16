@@ -1,20 +1,9 @@
-import { getMediaResources } from "@/lib/utils";
+import { DesktopSource, getMediaResources } from "@/lib/utils";
 import { useCallback, useReducer } from "react";
 
 export type SourceDeviceprops = {
-  displays?: {
-    appicon: null;
-    display_id: string;
-    id: string;
-    name: string;
-    thumbnail: unknown[];
-  }[];
-  audioInputs?: {
-    deviceId: string;
-    lable?: string;
-    kind: string;
-    groupId: string;
-  }[];
+  displays?: DesktopSource[];
+  audioInputs?: MediaDeviceInfo[];
   errors?: string | null;
   isPending: boolean;
 };
