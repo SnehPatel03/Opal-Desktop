@@ -88,9 +88,6 @@ const StudioTray = () => {
     };
   }, [recording, onSources?.plan]);
 
-  /*
-   * Start recording
-   */
   const handleStartRecording = async () => {
     if (!onSources || recording) return;
 

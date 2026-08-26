@@ -65,32 +65,44 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
+
   floatingWebCam = new BrowserWindow({
-    width: 400,
-    height: 200,
-    minHeight: 70,
-    minWidth: 400,
-    show: false,
-    frame: false,
-    hasShadow: false,
-    transparent: true,
-    backgroundColor: "#171717",
-    alwaysOnTop: true,
-    focusable: true,
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
-    webPreferences: {
-      nodeIntegration: false,
-      devTools: true,
-      contextIsolation: true,
-      preload: path.join(__dirname, "preload.mjs"),
-    },
-  });
+  width: 400,
+  height: 400,
+
+  minWidth: 400,
+  minHeight: 400,
+
+  show: false,
+  frame: false,
+  hasShadow: false,
+
+  transparent: true,
+  backgroundColor: "#00000000",
+
+  alwaysOnTop: true,
+  focusable: true,
+
+  resizable: false,
+
+  icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+
+  webPreferences: {
+    nodeIntegration: false,
+    devTools: true,
+    contextIsolation: true,
+    preload: path.join(__dirname, "preload.mjs"),
+  },
+});
 
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   win.setAlwaysOnTop(true, "screen-saver", 1);
 
   studio.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   studio.setAlwaysOnTop(true, "screen-saver", 1);
+
+  floatingWebCam.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  floatingWebCam.setAlwaysOnTop(true, "screen-saver", 1);
 
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
