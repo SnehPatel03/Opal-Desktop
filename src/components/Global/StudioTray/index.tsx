@@ -1,6 +1,6 @@
 import { onStopRecording, StartRecording } from "@/lib/recorder";
 import { cn, videoRecordingTime } from "@/lib/utils";
-import { Cast, Pause, Square } from "lucide-react";
+import { Cast, Square } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 type StudioSource = {
@@ -93,7 +93,9 @@ const StudioTray = () => {
 
     try {
       setStartError(null);
+
       await StartRecording(onSources);
+
       setRecording(true);
       initialTime.current = new Date();
     } catch (error) {
@@ -102,9 +104,6 @@ const StudioTray = () => {
     }
   };
 
-  /*
-   * Stop recording
-   */
   const handleStopRecording = () => {
     if (!recording) return;
 
@@ -114,24 +113,19 @@ const StudioTray = () => {
     onStopRecording();
   };
 
-  /*
-   * Pause recording
-   *
-   * Add your pause functionality here when
-   * your recorder supports pause/resume.
-   */
-  const handlePauseRecording = () => {
-    if (!recording) return;
-
-    console.log("Pause recording");
-  };
-
   const stopPreview = () => {
     previewStream.current?.getTracks().forEach((track) => track.stop());
     previewStream.current = null;
-    if (videoElement.current) videoElement.current.srcObject = null;
+
+    if (videoElement.current) {
+      videoElement.current.srcObject = null;
+    }
+
     setPreview(false);
-    window.ipcRenderer?.send("resize-studio", { shrink: true });
+
+    window.ipcRenderer?.send("resize-studio", {
+      shrink: true,
+    });
   };
 
   const handlePreview = async () => {
@@ -144,6 +138,7 @@ const StudioTray = () => {
 
     try {
       setStartError(null);
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
@@ -156,11 +151,17 @@ const StudioTray = () => {
       });
 
       previewStream.current = stream;
+
       setPreview(true);
-      window.ipcRenderer?.send("resize-studio", { shrink: false });
+
+      window.ipcRenderer?.send("resize-studio", {
+        shrink: false,
+      });
     } catch (error) {
       console.error("Unable to show preview", error);
+
       setStartError("Unable to show the selected screen preview.");
+
       stopPreview();
     }
   };
@@ -185,11 +186,20 @@ const StudioTray = () => {
           autoPlay
           muted
           playsInline
-          className="aspect-video w-full max-w-[368px] rounded-xl border border-white/15 bg-black object-cover shadow-xl"
+          className="
+            aspect-video
+            w-full
+            max-w-[368px]
+            rounded-xl
+            border
+            border-white/15
+            bg-black
+            object-cover
+            shadow-xl
+          "
         />
       )}
 
-      {/* Studio Tray */}
       <div
         className="
           draggable
@@ -207,6 +217,7 @@ const StudioTray = () => {
           backdrop-blur-xl
         "
       >
+        {/* Start Recording */}
         <button
           type="button"
           onClick={handleStartRecording}
@@ -240,9 +251,10 @@ const StudioTray = () => {
           />
         </button>
 
+        {/* Timer / Status */}
         <div className="non-draggable flex flex-1 items-center justify-center">
           {recording ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               <span
                 className="
                   min-w-[70px]
@@ -256,27 +268,6 @@ const StudioTray = () => {
               >
                 {onTimer}
               </span>
-
-              <button
-                type="button"
-                onClick={handlePauseRecording}
-                aria-label="Pause recording"
-                className="
-                  flex
-                  h-9
-                  w-9
-                  items-center
-                  justify-center
-                  rounded-full
-                  text-zinc-300
-                  transition-all
-                  duration-200
-                  hover:bg-white/10
-                  hover:text-white
-                "
-              >
-                <Pause size={17} strokeWidth={2} fill="currentColor" />
-              </button>
             </div>
           ) : (
             <span
@@ -292,7 +283,10 @@ const StudioTray = () => {
             </span>
           )}
         </div>
+
+        {/* Stop + Preview */}
         <div className="non-draggable flex items-center gap-1">
+          {/* Stop Recording */}
           <button
             type="button"
             onClick={handleStopRecording}
@@ -321,6 +315,7 @@ const StudioTray = () => {
             />
           </button>
 
+          {/* Preview */}
           <button
             type="button"
             onClick={handlePreview}
@@ -328,7 +323,18 @@ const StudioTray = () => {
             aria-label={preview ? "Hide preview" : "Show preview"}
             aria-pressed={preview}
             className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:text-zinc-700",
+              `
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-full
+                transition-all
+                duration-200
+                disabled:cursor-not-allowed
+                disabled:text-zinc-700
+              `,
               preview
                 ? "bg-white/10 text-white"
                 : "text-zinc-300 hover:bg-white/10 hover:text-white",

@@ -1,7 +1,6 @@
-import { app, BrowserWindow, desktopCapturer, ipcMain } from "electron";
+import { app, BrowserWindow, desktopCapturer, ipcMain, screen } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // The built directory structure
@@ -65,36 +64,48 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { workArea } = primaryDisplay;
+
+  const webcamWidth = 400;
+  const webcamHeight = 400;
+  const margin = 5;
+
+  const webcamX = workArea.x + workArea.width - webcamWidth - margin;
+
+  const webcamY = workArea.y + workArea.height - webcamHeight - margin;
 
   floatingWebCam = new BrowserWindow({
-  width: 400,
-  height: 400,
+    width: webcamWidth,
+    height: webcamHeight,
 
-  minWidth: 400,
-  minHeight: 400,
+    minWidth: webcamWidth,
+    minHeight: webcamHeight,
 
-  show: false,
-  frame: false,
-  hasShadow: false,
+    x: webcamX,
+    y: webcamY,
 
-  transparent: true,
-  backgroundColor: "#00000000",
+    show: false,
+    frame: false,
+    hasShadow: false,
 
-  alwaysOnTop: true,
-  focusable: true,
+    transparent: true,
+    backgroundColor: "#00000000",
 
-  resizable: false,
+    alwaysOnTop: true,
+    focusable: true,
+    movable: true,
+    resizable: false,
 
-  icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
 
-  webPreferences: {
-    nodeIntegration: false,
-    devTools: true,
-    contextIsolation: true,
-    preload: path.join(__dirname, "preload.mjs"),
-  },
-});
-
+    webPreferences: {
+      nodeIntegration: false,
+      devTools: true,
+      contextIsolation: true,
+      preload: path.join(__dirname, "preload.mjs"),
+    },
+  });
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   win.setAlwaysOnTop(true, "screen-saver", 1);
 
@@ -119,7 +130,10 @@ function createWindow() {
 
   win.once("ready-to-show", () => win?.show());
   studio.once("ready-to-show", () => studio?.show());
-  floatingWebCam.once("ready-to-show", () => floatingWebCam?.show());
+  floatingWebCam.once("ready-to-show", () => {
+    floatingWebCam?.setPosition(webcamX, webcamY);
+    floatingWebCam?.show();
+  });
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);

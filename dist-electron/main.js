@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app, desktopCapturer } from "electron";
+import { ipcMain, BrowserWindow, app, desktopCapturer, screen } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
@@ -54,11 +54,20 @@ function createWindow() {
       preload: path.join(__dirname$1, "preload.mjs")
     }
   });
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { workArea } = primaryDisplay;
+  const webcamWidth = 400;
+  const webcamHeight = 400;
+  const margin = 5;
+  const webcamX = workArea.x + workArea.width - webcamWidth - margin;
+  const webcamY = workArea.y + workArea.height - webcamHeight - margin;
   floatingWebCam = new BrowserWindow({
-    width: 400,
-    height: 400,
-    minWidth: 400,
-    minHeight: 400,
+    width: webcamWidth,
+    height: webcamHeight,
+    minWidth: webcamWidth,
+    minHeight: webcamHeight,
+    x: webcamX,
+    y: webcamY,
     show: false,
     frame: false,
     hasShadow: false,
@@ -66,6 +75,7 @@ function createWindow() {
     backgroundColor: "#00000000",
     alwaysOnTop: true,
     focusable: true,
+    movable: true,
     resizable: false,
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
@@ -95,7 +105,10 @@ function createWindow() {
   });
   win.once("ready-to-show", () => win == null ? void 0 : win.show());
   studio.once("ready-to-show", () => studio == null ? void 0 : studio.show());
-  floatingWebCam.once("ready-to-show", () => floatingWebCam == null ? void 0 : floatingWebCam.show());
+  floatingWebCam.once("ready-to-show", () => {
+    floatingWebCam == null ? void 0 : floatingWebCam.setPosition(webcamX, webcamY);
+    floatingWebCam == null ? void 0 : floatingWebCam.show();
+  });
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
     studio.loadURL(new URL("studio.html", VITE_DEV_SERVER_URL).toString());
