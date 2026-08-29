@@ -1,24 +1,35 @@
-import { app, BrowserWindow, desktopCapturer, ipcMain, screen } from "electron";
+import {
+  app,
+  BrowserWindow,
+  desktopCapturer,
+  ipcMain,
+  screen,
+} from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// The built directory structure
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 process.env.APP_ROOT = path.join(__dirname, "..");
 
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
+export const MAIN_DIST = path.join(
+  process.env.APP_ROOT,
+  "dist-electron",
+);
+export const RENDERER_DIST = path.join(
+  process.env.APP_ROOT,
+  "dist",
+);
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, "public")
   : RENDERER_DIST;
 
-let win: BrowserWindow | null;
-let studio: BrowserWindow | null;
-let floatingWebCam: BrowserWindow | null;
+let win: BrowserWindow | null = null;
+let studio: BrowserWindow | null = null;
+let floatingWebCam: BrowserWindow | null = null;
+
 let studioProfile: unknown | null = null;
 
 function createWindow() {
@@ -35,7 +46,10 @@ function createWindow() {
     alwaysOnTop: true,
     focusable: true,
     movable: true,
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: path.join(
+      process.env.VITE_PUBLIC,
+      "electron-vite.svg",
+    ),
     webPreferences: {
       nodeIntegration: false,
       devTools: true,
@@ -43,6 +57,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
+
   studio = new BrowserWindow({
     width: 400,
     height: 100,
@@ -56,7 +71,10 @@ function createWindow() {
     alwaysOnTop: true,
     focusable: true,
     movable: true,
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: path.join(
+      process.env.VITE_PUBLIC,
+      "electron-vite.svg",
+    ),
     webPreferences: {
       nodeIntegration: false,
       devTools: true,
@@ -64,6 +82,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
+
   const primaryDisplay = screen.getPrimaryDisplay();
   const { workArea } = primaryDisplay;
 
@@ -71,34 +90,38 @@ function createWindow() {
   const webcamHeight = 400;
   const margin = 5;
 
-  const webcamX = workArea.x + workArea.width - webcamWidth - margin;
+  const webcamX =
+    workArea.x +
+    workArea.width -
+    webcamWidth -
+    margin;
 
-  const webcamY = workArea.y + workArea.height - webcamHeight - margin;
+  const webcamY =
+    workArea.y +
+    workArea.height -
+    webcamHeight -
+    margin;
 
   floatingWebCam = new BrowserWindow({
     width: webcamWidth,
     height: webcamHeight,
-
     minWidth: webcamWidth,
     minHeight: webcamHeight,
-
     x: webcamX,
     y: webcamY,
-
     show: false,
     frame: false,
     hasShadow: false,
-
     transparent: true,
     backgroundColor: "#00000000",
-
     alwaysOnTop: true,
     focusable: true,
     movable: true,
     resizable: false,
-
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
-
+    icon: path.join(
+      process.env.VITE_PUBLIC,
+      "electron-vite.svg",
+    ),
     webPreferences: {
       nodeIntegration: false,
       devTools: true,
@@ -106,106 +129,254 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
-  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  win.setAlwaysOnTop(true, "screen-saver", 1);
 
-  studio.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  studio.setAlwaysOnTop(true, "screen-saver", 1);
+  win.on("closed", () => {
+    win = null;
+  });
 
-  floatingWebCam.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  floatingWebCam.setAlwaysOnTop(true, "screen-saver", 1);
+  studio.on("closed", () => {
+    studio = null;
+  });
+
+  floatingWebCam.on("closed", () => {
+    floatingWebCam = null;
+  });
+
+  if (win && !win.isDestroyed()) {
+    win.setVisibleOnAllWorkspaces(true, {
+      visibleOnFullScreen: true,
+    });
+
+    win.setAlwaysOnTop(true, "screen-saver", 1);
+  }
+
+  if (studio && !studio.isDestroyed()) {
+    studio.setVisibleOnAllWorkspaces(true, {
+      visibleOnFullScreen: true,
+    });
+
+    studio.setAlwaysOnTop(true, "screen-saver", 1);
+  }
+
+  if (
+    floatingWebCam &&
+    !floatingWebCam.isDestroyed()
+  ) {
+    floatingWebCam.setVisibleOnAllWorkspaces(true, {
+      visibleOnFullScreen: true,
+    });
+
+    floatingWebCam.setAlwaysOnTop(
+      true,
+      "screen-saver",
+      1,
+    );
+  }
 
   win.webContents.on("did-finish-load", () => {
-    win?.webContents.send("main-process-message", new Date().toLocaleString());
-  });
-  studio.webContents.on("did-finish-load", () => {
-    studio?.webContents.send(
-      "main-process-message",
-      new Date().toLocaleString(),
-    );
-    if (studioProfile) {
-      studio?.webContents.send("profile-received", studioProfile);
+    if (
+      win &&
+      !win.isDestroyed() &&
+      !win.webContents.isDestroyed()
+    ) {
+      win.webContents.send(
+        "main-process-message",
+        new Date().toLocaleString(),
+      );
     }
   });
 
-  win.once("ready-to-show", () => win?.show());
-  studio.once("ready-to-show", () => studio?.show());
+  studio.webContents.on("did-finish-load", () => {
+    if (
+      !studio ||
+      studio.isDestroyed() ||
+      studio.webContents.isDestroyed()
+    ) {
+      return;
+    }
+
+    studio.webContents.send(
+      "main-process-message",
+      new Date().toLocaleString(),
+    );
+
+    if (studioProfile) {
+      studio.webContents.send(
+        "profile-received",
+        studioProfile,
+      );
+    }
+  });
+
+  win.once("ready-to-show", () => {
+    if (win && !win.isDestroyed()) {
+      win.show();
+    }
+  });
+
+  studio.once("ready-to-show", () => {
+    if (studio && !studio.isDestroyed()) {
+      studio.show();
+    }
+  });
+
   floatingWebCam.once("ready-to-show", () => {
-    floatingWebCam?.setPosition(webcamX, webcamY);
-    floatingWebCam?.show();
+    if (
+      !floatingWebCam ||
+      floatingWebCam.isDestroyed()
+    ) {
+      return;
+    }
+
+    floatingWebCam.setPosition(
+      webcamX,
+      webcamY,
+    );
+
+    floatingWebCam.show();
   });
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
-    studio.loadURL(new URL("studio.html", VITE_DEV_SERVER_URL).toString());
+
+    studio.loadURL(
+      new URL(
+        "studio.html",
+        VITE_DEV_SERVER_URL,
+      ).toString(),
+    );
+
     floatingWebCam.loadURL(
-      new URL("webcam.html", VITE_DEV_SERVER_URL).toString(),
+      new URL(
+        "webcam.html",
+        VITE_DEV_SERVER_URL,
+      ).toString(),
     );
   } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
-    studio.loadFile(path.join(RENDERER_DIST, "studio.html"));
-    floatingWebCam.loadFile(path.join(RENDERER_DIST, "webcam.html"));
+    win.loadFile(
+      path.join(
+        RENDERER_DIST,
+        "index.html",
+      ),
+    );
+
+    studio.loadFile(
+      path.join(
+        RENDERER_DIST,
+        "studio.html",
+      ),
+    );
+
+    floatingWebCam.loadFile(
+      path.join(
+        RENDERER_DIST,
+        "webcam.html",
+      ),
+    );
   }
 }
 
 ipcMain.on("closeApp", (event) => {
-  BrowserWindow.fromWebContents(event.sender)?.close();
-});
+  const currentWindow =
+    BrowserWindow.fromWebContents(
+      event.sender,
+    );
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-    studio = null;
-    floatingWebCam = null;
-  }
-});
-
-ipcMain.on("closeApp", () => {
-  if (process.platform != "darwin") {
-    app.quit();
-    ((win = null), (studio = null), (floatingWebCam = null));
+  if (
+    currentWindow &&
+    !currentWindow.isDestroyed()
+  ) {
+    currentWindow.close();
   }
 });
 
 ipcMain.handle("getSources", async () => {
-  const data = await desktopCapturer.getSources({
-    thumbnailSize: { height: 100, width: 150 },
-    fetchWindowIcons: true,
-    types: ["window", "screen"],
-  });
-  // console.log('DISPLAYS 👊',data)
+  const data =
+    await desktopCapturer.getSources({
+      thumbnailSize: {
+        height: 100,
+        width: 150,
+      },
+      fetchWindowIcons: true,
+      types: [
+        "window",
+        "screen",
+      ],
+    });
+
   return data;
 });
-ipcMain.on("media-sources", async (event, payload) => {
-  console.log("🧐 Resources", payload);
-  studioProfile = payload;
-  studio?.webContents.send("profile-received", payload);
-});
 
-ipcMain.on("resize-studio", (event, payload) => {
-  console.log(event);
-  if (payload.shrink) {
-    studio?.setSize(400, 100);
-  }
-  if (!payload.shrink) {
-    studio?.setSize(400, 330);
-  }
-});
+ipcMain.on(
+  "media-sources",
+  (_event, payload) => {
+    console.log("🧐 Resources", payload);
 
-ipcMain.on("hide-plugin", (event, payload) => {
-  console.log(event);
-  win?.webContents.send("hide-plugin", payload);
-});
+    studioProfile = payload;
+
+    if (
+      studio &&
+      !studio.isDestroyed() &&
+      !studio.webContents.isDestroyed()
+    ) {
+      studio.webContents.send(
+        "profile-received",
+        payload,
+      );
+    }
+  },
+);
+
+ipcMain.on(
+  "resize-studio",
+  (_event, payload) => {
+    if (
+      !studio ||
+      studio.isDestroyed()
+    ) {
+      return;
+    }
+
+    if (payload.shrink) {
+      studio.setSize(400, 100);
+    } else {
+      studio.setSize(400, 330);
+    }
+  },
+);
+
+ipcMain.on(
+  "hide-plugin",
+  (_event, payload) => {
+    if (
+      win &&
+      !win.isDestroyed() &&
+      !win.webContents.isDestroyed()
+    ) {
+      win.webContents.send(
+        "hide-plugin",
+        payload,
+      );
+    }
+  },
+);
 
 app.on("activate", () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
+  if (
+    BrowserWindow.getAllWindows()
+      .length === 0
+  ) {
     createWindow();
+  }
+});
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+
+    win = null;
+    studio = null;
+    floatingWebCam = null;
   }
 });
 
