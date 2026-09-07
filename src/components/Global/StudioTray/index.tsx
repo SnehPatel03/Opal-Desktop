@@ -1,3 +1,5 @@
+"use client";
+
 import { onStopRecording, StartRecording } from "@/lib/recorder";
 import { cn, videoRecordingTime } from "@/lib/utils";
 import { Cast, Square } from "lucide-react";
@@ -40,8 +42,10 @@ const StudioTray = () => {
   }, []);
 
   useEffect(() => {
-    const handleProfileReceived = (_event: unknown, payload: StudioSource) => {
-      console.log("Profile received:", payload);
+    const handleProfileReceived = (
+      _event: unknown,
+      payload: StudioSource,
+    ) => {
       setOnSources(payload);
     };
 
@@ -64,7 +68,8 @@ const StudioTray = () => {
     if (!recording) return;
 
     const recordTimeInterval = setInterval(() => {
-      const time = new Date().getTime() - initialTime.current.getTime();
+      const time =
+        new Date().getTime() - initialTime.current.getTime();
 
       const recordingTime = videoRecordingTime(time);
 
@@ -83,9 +88,7 @@ const StudioTray = () => {
       }
     }, 100);
 
-    return () => {
-      clearInterval(recordTimeInterval);
-    };
+    return () => clearInterval(recordTimeInterval);
   }, [recording, onSources?.plan]);
 
   const handleStartRecording = async () => {
@@ -100,7 +103,9 @@ const StudioTray = () => {
       initialTime.current = new Date();
     } catch (error) {
       console.error("Unable to start recording", error);
-      setStartError("Allow screen and microphone access, then try again.");
+      setStartError(
+        "Allow screen and microphone access, then try again.",
+      );
     }
   };
 
@@ -109,7 +114,6 @@ const StudioTray = () => {
 
     setRecording(false);
     clearTime();
-
     onStopRecording();
   };
 
@@ -176,30 +180,64 @@ const StudioTray = () => {
         items-center
         justify-center
         gap-3
+        bg-transparent
         p-4
         draggable
       "
     >
+      {/* Preview */}
       {preview && (
-        <video
-          ref={videoElement}
-          autoPlay
-          muted
-          playsInline
+        <div
           className="
-            aspect-video
+            relative
             w-full
             max-w-[368px]
+            overflow-hidden
             rounded-xl
             border
-            border-white/15
-            bg-black
-            object-cover
-            shadow-xl
+            border-white/[0.12]
+            bg-[#080808]
+            shadow-[0_16px_50px_rgba(0,0,0,0.55)]
           "
-        />
+        >
+          <video
+            ref={videoElement}
+            autoPlay
+            muted
+            playsInline
+            className="
+              block
+              aspect-video
+              w-full
+              object-cover
+            "
+          />
+
+          {/* Preview indicator */}
+          <div
+            className="
+              absolute
+              left-3
+              top-3
+              flex
+              items-center
+              gap-1.5
+              rounded-full
+              bg-black/70
+              px-2.5
+              py-1
+              backdrop-blur-md
+            "
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[#ff4c0f]" />
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-white/80">
+              Preview
+            </span>
+          </div>
+        </div>
       )}
 
+      {/* Recorder */}
       <div
         className="
           draggable
@@ -208,16 +246,16 @@ const StudioTray = () => {
           w-full
           max-w-[380px]
           items-center
-          rounded-full
+          rounded-[20px]
           border
-          border-white/20
-          bg-[#171717]/95
+          border-white/[0.12]
+          bg-[#101011]/95
           px-3
           shadow-[0_12px_40px_rgba(0,0,0,0.5)]
           backdrop-blur-xl
         "
       >
-        {/* Start Recording */}
+        {/* Record */}
         <button
           type="button"
           onClick={handleStartRecording}
@@ -233,7 +271,7 @@ const StudioTray = () => {
             items-center
             justify-center
             rounded-full
-            transition-all
+            transition-transform
             duration-200
             hover:scale-105
             active:scale-95
@@ -243,18 +281,20 @@ const StudioTray = () => {
         >
           <span
             className={cn(
-              "rounded-full transition-all duration-200",
+              "block transition-all duration-200",
               recording
-                ? "h-6 w-6 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.35)]"
-                : "h-8 w-8 bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.3)]",
+                ? "h-6 w-6 rounded-[5px] bg-[#ff4c0f] shadow-[0_0_14px_rgba(255,76,15,0.35)]"
+                : "h-8 w-8 rounded-full bg-[#ff4c0f] shadow-[0_0_18px_rgba(255,76,15,0.25)]",
             )}
           />
         </button>
 
-        {/* Timer / Status */}
-        <div className="non-draggable flex flex-1 items-center justify-center">
+        {/* Status */}
+        <div className="non-draggable flex flex-1 items-center justify-center px-3">
           {recording ? (
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#ff4c0f]" />
+
               <span
                 className="
                   min-w-[70px]
@@ -271,12 +311,14 @@ const StudioTray = () => {
             </div>
           ) : (
             <span
-              className="
-                text-xs
-                font-medium
-                tracking-wide
-                text-zinc-500
-              "
+              className={cn(
+                "max-w-[180px] truncate text-center text-xs font-medium tracking-wide",
+                startError
+                  ? "text-[#ff4c0f]"
+                  : onSources
+                    ? "text-zinc-500"
+                    : "text-zinc-600",
+              )}
             >
               {startError ??
                 (onSources ? "Ready to record" : "Loading settings…")}
@@ -284,9 +326,9 @@ const StudioTray = () => {
           )}
         </div>
 
-        {/* Stop + Preview */}
-        <div className="non-draggable flex items-center gap-1">
-          {/* Stop Recording */}
+        {/* Controls */}
+        <div className="non-draggable flex items-center gap-0.5">
+          {/* Stop */}
           <button
             type="button"
             onClick={handleStopRecording}
@@ -304,12 +346,12 @@ const StudioTray = () => {
                 duration-200
               `,
               recording
-                ? "cursor-pointer text-zinc-300 hover:bg-white/10 hover:text-white"
+                ? "cursor-pointer text-zinc-300 hover:bg-white/[0.08] hover:text-white"
                 : "cursor-not-allowed text-zinc-700",
             )}
           >
             <Square
-              size={17}
+              size={16}
               strokeWidth={2}
               fill={recording ? "currentColor" : "none"}
             />
@@ -333,11 +375,10 @@ const StudioTray = () => {
                 transition-all
                 duration-200
                 disabled:cursor-not-allowed
-                disabled:text-zinc-700
               `,
               preview
-                ? "bg-white/10 text-white"
-                : "text-zinc-300 hover:bg-white/10 hover:text-white",
+                ? "bg-[#ff4c0f]/15 text-[#ff4c0f]"
+                : "text-zinc-400 hover:bg-white/[0.08] hover:text-white",
             )}
           >
             <Cast size={18} strokeWidth={2} />
