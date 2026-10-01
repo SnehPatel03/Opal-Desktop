@@ -4,6 +4,7 @@ import { onStopRecording, StartRecording } from "@/lib/recorder";
 import { cn, videoRecordingTime } from "@/lib/utils";
 import { Cast, Square } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type StudioSource = {
   id: string;
@@ -73,10 +74,11 @@ const StudioTray = () => {
 
       const recordingTime = videoRecordingTime(time);
 
-      if (onSources?.plan === "FREE" && time >= 5 * 60 * 1000) {
+      if (onSources?.plan === "FREE" && time >= 3 * 60 * 1000) {
         setRecording(false);
         clearTime();
         onStopRecording();
+        toast.message('Free Tier limit: Videos can’t be longer than 3 minutes' )
         return;
       }
 
@@ -312,7 +314,7 @@ const StudioTray = () => {
           ) : (
             <span
               className={cn(
-                "max-w-[180px] truncate text-center text-xs font-medium tracking-wide",
+                "max-w-[180px] select-none truncate text-center text-xs font-medium tracking-wide",
                 startError
                   ? "text-[#ff4c0f]"
                   : onSources

@@ -16,12 +16,12 @@ function App() {
             <Widget />
             <div className="mt-auto flex items-center gap-2 pt-3 text-sm font-semibold text-zinc-100">
               <img src="/logo.svg" alt="Opal" className="h-7 w-7 object-contain" />
-              <span>Opal</span>
+              <span>OPAL</span>
             </div>
           </div>
         ) : (
           <div className="rounded-xl border border-white/10 bg-white/5 p-5 text-gray-200">
-            <h1 className="text-lg font-medium">Opal</h1>
+            <h1 className="text-lg font-medium">OPAL</h1>
             <p className="mt-1 text-sm text-gray-400">
               The app shell is running. Add VITE_CLERK_PUBLISHABLE_KEY to enable sign-in.
             </p>
