@@ -1,4 +1,4 @@
-import { ClerkLoading, Show, useUser } from "@clerk/react";
+import { ClerkLoading, Show, useAuth, useUser } from "@clerk/react";
 import { Loader } from "../Loader";
 import { useEffect, useState } from "react";
 import { fetchUserProfile } from "@/lib/utils";
@@ -34,13 +34,22 @@ const Widget = () => {
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const { user } = useUser();
+  const { getToken } = useAuth();
   const { state, fetchMediaResources } = useMediaSource();
-  console.log("state", state);
 
   useEffect(() => {
-    if (user && user.id) {
-      fetchUserProfile(user.id)
+    if (user?.id) {
+      let cancelled = false;
+
+      void getToken()
+        .then((token) => {
+          if (!token) {
+            throw new Error("Your Opal session has expired. Sign in again.");
+          }
+          return fetchUserProfile(user.id, token);
+        })
         .then((response) => {
+          if (cancelled) return;
           // Support both `{ user: ... }` API responses and direct user objects.
           const profileUser =
             response?.user ??
@@ -51,6 +60,7 @@ const Widget = () => {
           setProfile({ status: response?.status ?? 200, user: profileUser });
         })
         .catch((error) => {
+          if (cancelled) return;
           setProfileError(
             error instanceof Error
               ? error.message
@@ -58,8 +68,12 @@ const Widget = () => {
           );
         });
       fetchMediaResources();
+
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [user, fetchMediaResources]);
+  }, [fetchMediaResources, getToken, user?.id]);
 
   return (
     <>

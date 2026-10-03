@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateStudioSettings } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/react";
 
 export const useStudioSettings = (
   id: string,
@@ -12,6 +13,7 @@ export const useStudioSettings = (
   preset?: "HD" | "SD",
   plan?: "PRO" | "FREE",
 ) => {
+  const { getToken } = useAuth();
   const { register, watch } = useZodForm(updateStudioSettingSchema, {
     screen: screen!,
     audio: audio!,
@@ -20,12 +22,24 @@ export const useStudioSettings = (
 
   const { mutate } = useMutation({
     mutationKey: ["update-studio"],
-    mutationFn: (data: {
+    mutationFn: async (data: {
       screen: string;
       id: string;
       audio: string;
       preset: "HD" | "SD";
-    }) => updateStudioSettings(data.id, data.screen, data.audio, data.preset),
+    }) => {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Your Opal session has expired. Sign in again.");
+      }
+      return updateStudioSettings(
+        data.id,
+        data.screen,
+        data.audio,
+        data.preset,
+        token,
+      );
+    },
     onSuccess: (data) => {
       return toast(data.status === 200 ? "Success" : "Error", {
         description: data.message,

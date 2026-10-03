@@ -15,7 +15,11 @@ function App() {
           <div className="flex h-full flex-col">
             <Widget />
             <div className="mt-auto flex items-center gap-2 pt-3 text-sm font-semibold text-zinc-100">
-              <img src="/logo.svg" alt="Opal" className="h-7 w-7 object-contain" />
+              <img
+                src={`${import.meta.env.BASE_URL}logo.svg`}
+                alt="Opal"
+                className="h-7 w-7 object-contain"
+              />
               <span>OPAL</span>
             </div>
           </div>

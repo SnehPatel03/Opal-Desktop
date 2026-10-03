@@ -8,18 +8,20 @@ export function cn(...inputs: ClassValue[]) {
 export const onCloseApp = () => window.ipcRenderer?.send("closeApp");
 
 const httpClient = axios.create({
-  // Use Vite's same-origin proxy in development to prevent browser CORS checks.
-  // Set VITE_API_BASE_URL only when a production API gateway is configured.
   baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
 });
 
-export const fetchUserProfile = async (clerkId: string) => {
+const authHeaders = (token: string) => ({
+  Authorization: `Bearer ${token}`,
+});
+
+export const fetchUserProfile = async (clerkId: string, token: string) => {
   const response = await httpClient.get(`/auth/${clerkId}`, {
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(token),
     },
   });
-  console.log("user data", response);
   return response.data;
 };
 
@@ -60,6 +62,7 @@ export const updateStudioSettings = async (
   screen: string,
   audio: string,
   preset: "HD" | "SD",
+  token: string,
 ) => {
   const res = await httpClient.post(
     `/studio/${id}`,
@@ -71,6 +74,7 @@ export const updateStudioSettings = async (
     {
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders(token),
       },
     },
   );
