@@ -8,7 +8,11 @@ export function cn(...inputs: ClassValue[]) {
 export const onCloseApp = () => window.ipcRenderer?.send("closeApp");
 
 const httpClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.PROD
+      ? "https://opal-beige.vercel.app/api"
+      : "/api"),
 });
 
 const authHeaders = (token: string) => ({

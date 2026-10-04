@@ -33,10 +33,9 @@ jobs:
         shell: bash
         run: |
           test -n "$VITE_SOCKET_URL" || { echo "::error::Set the VITE_SOCKET_URL Actions variable."; exit 1; }
-          test -n "$VITE_API_BASE_URL" || { echo "::error::Set the VITE_API_BASE_URL Actions variable."; exit 1; }
           test -n "$VITE_CLERK_PUBLISHABLE_KEY" || { echo "::error::Set the VITE_CLERK_PUBLISHABLE_KEY Actions variable."; exit 1; }
           node --input-type=module -e 'const url = new URL(process.env.VITE_SOCKET_URL); if (url.protocol !== "https:") throw new Error("VITE_SOCKET_URL must use HTTPS in production.");'
-          node --input-type=module -e 'const url = new URL(process.env.VITE_API_BASE_URL); if (url.protocol !== "https:" || !url.pathname.replace(/\/+$/, "").endsWith("/api")) throw new Error("VITE_API_BASE_URL must be an HTTPS URL ending in /api.");'
+          node --input-type=module -e 'const url = new URL(process.env.VITE_API_BASE_URL || "https://opal-beige.vercel.app/api"); if (url.protocol !== "https:" || !url.pathname.replace(/\/+$/, "").endsWith("/api")) throw new Error("VITE_API_BASE_URL must be an HTTPS URL ending in /api.");'
       - run: npm ci
       - run: npm run build -- --publish never
       - uses: actions/upload-artifact@v4

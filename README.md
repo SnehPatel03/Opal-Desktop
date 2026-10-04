@@ -17,9 +17,9 @@ set `VITE_SOCKET_URL` to the local Express URL (normally
    `/health` endpoint responds successfully.
 2. In the `Opal-Desktop` GitHub repository, add Actions variables:
    - `VITE_SOCKET_URL`: the Render HTTPS service URL, without an API path.
-   - `VITE_API_BASE_URL`: the production website API URL ending in `/api`,
-     for example `https://opal-beige.vercel.app/api`.
    - `VITE_CLERK_PUBLISHABLE_KEY`: the production Clerk publishable key.
+   - `VITE_API_BASE_URL` is optional; the app defaults to
+     `https://opal-beige.vercel.app/api` in production.
 3. Set the package version in `package.json` for the release.
 4. Push a matching version tag, for example `v1.0.0`. The desktop release
    workflow builds Windows, macOS, and Linux installers and attaches them to a
