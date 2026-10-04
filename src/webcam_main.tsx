@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { ClerkProvider } from "@clerk/react";
+import { ClerkProvider } from "@clerk/electron/react";
 import "./index.css";
 import Webcam_app from "./webcam_app";
 

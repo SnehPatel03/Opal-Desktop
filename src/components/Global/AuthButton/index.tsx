@@ -11,7 +11,7 @@ const AuthButton = () => {
     <div className="flex items-center">
       <Show when="signed-out">
         <div className="flex items-center gap-3">
-          <SignInButton>
+          <SignInButton mode="modal">
             <button
               type="button"
               className="
@@ -29,7 +29,7 @@ const AuthButton = () => {
             </button>
           </SignInButton>
 
-          <SignUpButton>
+          <SignUpButton mode="modal">
             <button
               type="button"
               className="

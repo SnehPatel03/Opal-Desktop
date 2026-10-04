@@ -1,7 +1,7 @@
 {
   "name": "opal-desktop-app",
   "private": true,
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@clerk/electron": "^0.0.50",
     "@clerk/react": "^6.12.11",
     "@fontsource-variable/geist": "^5.3.0",
     "@hookform/resolvers": "^5.7.1",
@@ -19,6 +20,7 @@
     "axios": "^1.19.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-store": "^8.2.0",
     "lucide-react": "^1.31.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

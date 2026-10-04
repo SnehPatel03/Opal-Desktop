@@ -4,6 +4,12 @@
   "appId": "com.snehpatel.opal",
   "asar": true,
   "productName": "Opal",
+  "protocols": [
+    {
+      "name": "Opal",
+      "schemes": ["opal"]
+    }
+  ],
   "directories": {
     "output": "release/${version}"
   },
@@ -18,7 +24,7 @@
     "target": [
       "dmg"
     ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-Mac-Installer.${ext}"
   },
   "win": {
     "target": [
@@ -29,18 +35,19 @@
         ]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "${productName}-Windows-Setup.${ext}"
   },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
+    "runAfterFinish": true,
     "deleteAppDataOnUninstall": false
   },
   "linux": {
     "target": [
       "AppImage"
     ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+    "artifactName": "${productName}-Linux.${ext}"
   }
 }

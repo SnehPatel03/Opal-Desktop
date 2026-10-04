@@ -3,12 +3,32 @@ import {
   BrowserWindow,
   desktopCapturer,
   ipcMain,
+  net,
+  protocol,
   screen,
+  shell,
 } from "electron";
-import { fileURLToPath } from "node:url";
+import { createClerkBridge } from "@clerk/electron";
+import { storage } from "@clerk/electron/storage";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const RENDERER_SCHEME = "opal";
+const RENDERER_HOST = "renderer";
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: RENDERER_SCHEME,
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+    },
+  },
+]);
 
 process.env.APP_ROOT = path.join(__dirname, "..");
 
@@ -26,11 +46,50 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, "public")
   : RENDERER_DIST;
 
+const clerkBridge = createClerkBridge({
+  storage: storage(),
+  renderer: {
+    scheme: RENDERER_SCHEME,
+    host: RENDERER_HOST,
+  },
+  userAgent: `Opal/${app.getVersion()}`,
+});
+
 let win: BrowserWindow | null = null;
 let studio: BrowserWindow | null = null;
 let floatingWebCam: BrowserWindow | null = null;
 
 let studioProfile: unknown | null = null;
+
+function secureWindowNavigation(window: BrowserWindow) {
+  const appOrigin = `${RENDERER_SCHEME}://${RENDERER_HOST}`;
+  const developmentOrigin = VITE_DEV_SERVER_URL
+    ? new URL(VITE_DEV_SERVER_URL).origin
+    : null;
+  const allowedOrigins = new Set(
+    [appOrigin, developmentOrigin].filter(
+      (origin): origin is string => Boolean(origin),
+    ),
+  );
+
+  window.webContents.on("will-navigate", (event, url) => {
+    const target = new URL(url);
+    const targetOrigin = `${target.protocol}//${target.host}`;
+    if (allowedOrigins.has(targetOrigin)) return;
+
+    event.preventDefault();
+    if (target.protocol === "https:" || target.protocol === "http:") {
+      void shell.openExternal(url);
+    }
+  });
+
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith("https://") || url.startsWith("http://")) {
+      void shell.openExternal(url);
+    }
+    return { action: "deny" };
+  });
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -129,6 +188,10 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
+
+  secureWindowNavigation(win);
+  secureWindowNavigation(studio);
+  secureWindowNavigation(floatingWebCam);
 
   win.on("closed", () => {
     win = null;
@@ -253,27 +316,32 @@ function createWindow() {
       ).toString(),
     );
   } else {
-    win.loadFile(
-      path.join(
-        RENDERER_DIST,
-        "index.html",
-      ),
-    );
-
-    studio.loadFile(
-      path.join(
-        RENDERER_DIST,
-        "studio.html",
-      ),
-    );
-
-    floatingWebCam.loadFile(
-      path.join(
-        RENDERER_DIST,
-        "webcam.html",
-      ),
+    void win.loadURL(`${RENDERER_SCHEME}://${RENDERER_HOST}/index.html`);
+    void studio.loadURL(`${RENDERER_SCHEME}://${RENDERER_HOST}/studio.html`);
+    void floatingWebCam.loadURL(
+      `${RENDERER_SCHEME}://${RENDERER_HOST}/webcam.html`,
     );
   }
+}
+
+async function registerRendererProtocol() {
+  await protocol.handle(RENDERER_SCHEME, (request) => {
+    const url = new URL(request.url);
+    if (url.host !== RENDERER_HOST) {
+      return new Response("Not found", { status: 404 });
+    }
+
+    const requestedPath = decodeURIComponent(url.pathname);
+    const relativePath = requestedPath === "/" ? "index.html" : requestedPath.slice(1);
+    const filePath = path.resolve(RENDERER_DIST, relativePath);
+    const rendererRoot = path.resolve(RENDERER_DIST);
+
+    if (!filePath.startsWith(`${rendererRoot}${path.sep}`)) {
+      return new Response("Not found", { status: 404 });
+    }
+
+    return net.fetch(pathToFileURL(filePath).toString());
+  });
 }
 
 ipcMain.on("closeApp", (event) => {
@@ -380,4 +448,17 @@ app.on("window-all-closed", () => {
   }
 });
 
-app.whenReady().then(createWindow);
+if (clerkBridge.isPrimaryInstance) {
+  app.whenReady().then(async () => {
+    if (!VITE_DEV_SERVER_URL) {
+      await registerRendererProtocol();
+      app.setAsDefaultProtocolClient(RENDERER_SCHEME);
+    }
+
+    createWindow();
+  });
+}
+
+app.on("before-quit", () => {
+  clerkBridge.cleanup();
+});
