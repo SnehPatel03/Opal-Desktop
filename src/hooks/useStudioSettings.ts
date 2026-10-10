@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateStudioSettings } from "@/lib/utils";
 import { toast } from "sonner";
-import { useAuth } from "@clerk/react";
+import { useAuth } from "@clerk/electron/react";
 
 export const useStudioSettings = (
   id: string,

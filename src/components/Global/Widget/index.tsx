@@ -1,4 +1,9 @@
-import { ClerkLoading, Show, useAuth, useUser } from "@clerk/react";
+import {
+  ClerkLoading,
+  Show,
+  useAuth,
+  useUser,
+} from "@clerk/electron/react";
 import { Loader } from "../Loader";
 import { useEffect, useState } from "react";
 import { fetchUserProfile } from "@/lib/utils";

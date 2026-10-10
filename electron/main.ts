@@ -83,6 +83,22 @@ function secureWindowNavigation(window: BrowserWindow) {
     }
   });
 
+  window.webContents.on("before-input-event", (event, input) => {
+    const key = input.key.toLowerCase();
+    const isDevToolsShortcut =
+      input.key === "F12" ||
+      ((input.control || input.meta) && input.shift && key === "i");
+
+    if (!isDevToolsShortcut) return;
+
+    event.preventDefault();
+    if (window.webContents.isDevToolsOpened()) {
+      window.webContents.closeDevTools();
+    } else {
+      window.webContents.openDevTools({ mode: "detach" });
+    }
+  });
+
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("https://") || url.startsWith("http://")) {
       void shell.openExternal(url);

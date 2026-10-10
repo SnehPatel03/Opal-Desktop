@@ -4,7 +4,7 @@ import {
   SignInButton,
   SignUpButton,
   UserButton,
-} from "@clerk/react";
+} from "@clerk/electron/react";
 
 const AuthButton = () => {
   return (
@@ -15,6 +15,7 @@ const AuthButton = () => {
             <button
               type="button"
               className="
+                non-draggable
                 rounded-xl
                 border border-white/10
                 bg-white/10
@@ -33,6 +34,7 @@ const AuthButton = () => {
             <button
               type="button"
               className="
+                non-draggable
                 rounded-xl
                 bg-white
                 px-4 py-2
